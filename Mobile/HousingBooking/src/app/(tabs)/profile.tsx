@@ -117,6 +117,18 @@ export default function ProfileScreen() {
           </View>
         )}
 
+        {/* Role entry points */}
+        {user?.role === 'agent' && (
+          <Button variant="primary" onPress={() => router.push('/agent/index')} style={styles.entryBtn}>
+            <MaterialIcons name="storefront" size={16} color={Colors.light.white} style={{ marginRight: 6 }} /> Agent Dashboard
+          </Button>
+        )}
+        {user?.role === 'admin' && (
+          <Button variant="primary" onPress={() => router.push('/admin/index')} style={styles.entryBtn}>
+            <MaterialIcons name="shield" size={16} color={Colors.light.white} style={{ marginRight: 6 }} /> Admin Portal
+          </Button>
+        )}
+
         {/* Logout */}
         <Button variant="danger" onPress={() => { logout(); router.replace('/login'); }} style={{ marginTop: Spacing.xl }}>
           <MaterialIcons name="logout" size={16} color={Colors.light.white} style={{ marginRight: 6 }} /> Logout
@@ -133,4 +145,5 @@ const styles = StyleSheet.create({
   tabActive: { borderBottomColor: Colors.light.primary },
   bookingCard: { backgroundColor: Colors.light.white, borderRadius: Radius.md, padding: Spacing.md, borderWidth: 1, borderColor: Colors.light.line, marginBottom: Spacing.md, marginHorizontal: Spacing.md },
   disputeBtn: { marginTop: Spacing.sm, borderWidth: 1, borderColor: '#FECACA' },
+  entryBtn: { marginHorizontal: Spacing.md, marginTop: Spacing.sm },
 });

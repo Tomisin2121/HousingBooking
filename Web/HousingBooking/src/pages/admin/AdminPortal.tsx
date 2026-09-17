@@ -92,6 +92,12 @@ function AgentsPanel() {
     load();
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this agent account, all their listings and bookings? This cannot be undone.')) return;
+    await adminApi.deleteAgent(id);
+    load();
+  };
+
   return (
     <div className="space-y-6">
       {pending.length > 0 && (
@@ -109,6 +115,7 @@ function AgentsPanel() {
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => handleReview(a.id, 'approve')}>Approve</Button>
                     <Button variant="danger" size="sm" onClick={() => handleReview(a.id, 'ban')}>Reject</Button>
+                    <Button variant="danger" size="sm" onClick={() => handleDelete(a.id)}>Delete</Button>
                   </div>
                 </div>
               </Card>
@@ -131,11 +138,14 @@ function AgentsPanel() {
                   <td className="p-3"><Badge variant={a.status === 'approved' ? 'green' : a.status === 'pending' ? 'orange' : 'red'}>{a.status}</Badge></td>
                   <td className="p-3">{a.listing_count}</td>
                   <td className="p-3">
-                    {a.status === 'approved' ? (
-                      <Button variant="danger" size="sm" onClick={() => handleReview(a.id, 'suspend')}>Suspend</Button>
-                    ) : a.status === 'suspended' ? (
-                      <Button size="sm" onClick={() => handleReview(a.id, 'approve')}>Approve</Button>
-                    ) : null}
+                    <div className="flex flex-wrap gap-2">
+                      {a.status === 'approved' ? (
+                        <Button variant="danger" size="sm" onClick={() => handleReview(a.id, 'suspend')}>Suspend</Button>
+                      ) : a.status === 'suspended' ? (
+                        <Button size="sm" onClick={() => handleReview(a.id, 'approve')}>Approve</Button>
+                      ) : null}
+                      <Button variant="danger" size="sm" onClick={() => handleDelete(a.id)}>Delete</Button>
+                    </div>
                   </td>
                 </tr>
               ))}

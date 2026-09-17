@@ -198,10 +198,10 @@ const styles = StyleSheet.create({
     paddingVertical: Platform.OS === 'ios' ? 12 : 10, fontSize: 14,
   },
   chip: {
-    paddingHorizontal: 14, paddingVertical: 6, borderRadius: Radius.pill,
-    marginRight: Spacing.sm, marginBottom: Spacing.xs, borderWidth: 1,
+    minHeight: 32, paddingHorizontal: 14, paddingVertical: 5, borderRadius: Radius.pill,
+    marginRight: Spacing.sm, borderWidth: 1, alignItems: 'center', justifyContent: 'center',
   },
-  chipText: { fontSize: 12, fontWeight: '500' },
+  chipText: { fontSize: 13, fontWeight: '600', textAlign: 'center', includeFontPadding: false },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.pill },
   badgeText: { fontSize: 11, fontWeight: '600' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: Spacing.lg },

@@ -4,6 +4,7 @@ import type { User, Agent, Listing, Conversation, Message, Booking, Region, Room
 export const DEMO_CREDENTIALS = [
   { role: 'Student', email: 'student@housingbooking.app', password: 'Password123!' },
   { role: 'Agent', email: 'agent1@housingbooking.app', password: 'Password123!' },
+  { role: 'Admin', email: 'supresident@student.futa.edu.ng', password: 'Password123!' },
 ];
 
 const STORAGE_KEY = 'hb_mock_db_v2';
@@ -65,6 +66,7 @@ function buildListing(
     platform_fee: platformFee,
     caution_fee: caution,
     total_estimate: price + platformFee + caution,
+    created_at: p.created_at ?? iso(0),
     ...p,
   };
 }
@@ -92,15 +94,15 @@ export function buildSeed(): DB {
   ];
 
   const listings: Listing[] = [
-    buildListing('l_whitewalls', agents[0], agent1User, { name: 'White Walls Hostel', region: 'west_gate', address: '4 White Walls Road, West Gate', lat: 7.2868, lng: 5.1298, price: 45000, room_types: ['self_contain', '1_bedroom'], amenities: ['Water', '24hr Light', 'Security', 'Fence'], walk_minutes: 10, available_rooms: 4 }),
-    buildListing('l_lobito', agents[0], agent1User, { name: 'Lobito Lodge', region: 'west_gate', address: '12 Araromi St, West Gate', lat: 7.2879, lng: 5.1309, price: 18000, room_types: ['shared'], amenities: ['Water', 'Security'], walk_minutes: 8, available_rooms: 8 }),
-    buildListing('l_fedpo', agents[0], agent1User, { name: 'Fedpo Walk Hostel', region: 'west_gate', address: '3 Fedpo Road, West Gate', lat: 7.2857, lng: 5.1317, price: 60000, room_types: ['2_bedroom', '1_bedroom'], amenities: ['Water', '24hr Light', 'Security', 'Parking'], walk_minutes: 15, available_rooms: 2 }),
-    buildListing('l_southgate', agents[0], agent1User, { name: 'Southgate Lodge', region: 'south_gate', address: '21 South Gate Road', lat: 7.2932, lng: 5.1389, price: 25000, room_types: ['shared', '1_bedroom'], amenities: ['Water', 'Security', 'Fence'], walk_minutes: 5, available_rooms: 5 }),
-    buildListing('l_easywalk', agents[0], agent1User, { name: 'Easy Walk Lodge', region: 'south_gate', address: '8 Oke Aro Close, South Gate', lat: 7.2941, lng: 5.1377, price: 40000, room_types: ['self_contain'], amenities: ['Water', '24hr Light', 'Security', 'Wi-Fi'], walk_minutes: 3, available_rooms: 3 }),
-    buildListing('l_goolf', agents[2], agent3User, { name: 'Goolf Hostel', region: 'south_gate', address: '2 Goolf Estate, South Gate', lat: 7.2921, lng: 5.1402, price: 55000, room_types: ['1_bedroom'], amenities: ['Water', '24hr Light', 'Security', 'Fence', 'Parking'], walk_minutes: 7, available_rooms: 1 }),
-    buildListing('l_northgate', agents[2], agent3User, { name: 'Northgate Comfort', region: 'north_gate', address: '15 North Gate Road', lat: 7.2965, lng: 5.1455, price: 65000, room_types: ['2_bedroom'], amenities: ['Water', '24hr Light', 'Security', 'Parking', 'Wi-Fi'], walk_minutes: 12, available_rooms: 2 }),
-    buildListing('l_futuremasters', agents[2], agent3User, { name: 'Future Masters Lodge', region: 'north_gate', address: '31 Igoba Road, North Gate', lat: 7.2973, lng: 5.1464, price: 20000, room_types: ['shared'], amenities: ['Water', 'Security'], walk_minutes: 18, available_rooms: 10 }),
-    buildListing('l_alumni', agents[2], agent3User, { name: 'Alumni Lodge', region: 'north_gate', address: '5 North Gate Extension', lat: 7.2958, lng: 5.1441, price: 35000, room_types: ['self_contain'], amenities: ['Water', '24hr Light', 'Security', 'Fence', 'Parking'], walk_minutes: 9, available_rooms: 6 }),
+    buildListing('l_whitewalls', agents[0], agent1User, { name: 'White Walls Hostel', region: 'west_gate', address: '4 White Walls Road, West Gate', lat: 7.2868, lng: 5.1298, price: 45000, room_types: ['self_contain', '1_bedroom'], amenities: ['Water', '24hr Light', 'Security', 'Fence'], walk_minutes: 10, available_rooms: 4, created_at: iso(60 * 2) }),
+    buildListing('l_lobito', agents[0], agent1User, { name: 'Lobito Lodge', region: 'west_gate', address: '12 Araromi St, West Gate', lat: 7.2879, lng: 5.1309, price: 18000, room_types: ['shared'], amenities: ['Water', 'Security'], walk_minutes: 8, available_rooms: 8, created_at: iso(60 * 24 * 6) }),
+    buildListing('l_fedpo', agents[0], agent1User, { name: 'Fedpo Walk Hostel', region: 'west_gate', address: '3 Fedpo Road, West Gate', lat: 7.2857, lng: 5.1317, price: 60000, room_types: ['2_bedroom', '1_bedroom'], amenities: ['Water', '24hr Light', 'Security', 'Parking'], walk_minutes: 15, available_rooms: 2, created_at: iso(60 * 24 * 30) }),
+    buildListing('l_southgate', agents[0], agent1User, { name: 'Southgate Lodge', region: 'south_gate', address: '21 South Gate Road', lat: 7.2932, lng: 5.1389, price: 25000, room_types: ['shared', '1_bedroom'], amenities: ['Water', 'Security', 'Fence'], walk_minutes: 5, available_rooms: 5, created_at: iso(60 * 24) }),
+    buildListing('l_easywalk', agents[0], agent1User, { name: 'Easy Walk Lodge', region: 'south_gate', address: '8 Oke Aro Close, South Gate', lat: 7.2941, lng: 5.1377, price: 40000, room_types: ['self_contain'], amenities: ['Water', '24hr Light', 'Security', 'Wi-Fi'], walk_minutes: 3, available_rooms: 3, created_at: iso(60 * 24 * 4) }),
+    buildListing('l_goolf', agents[2], agent3User, { name: 'Goolf Hostel', region: 'south_gate', address: '2 Goolf Estate, South Gate', lat: 7.2921, lng: 5.1402, price: 55000, room_types: ['1_bedroom'], amenities: ['Water', '24hr Light', 'Security', 'Fence', 'Parking'], walk_minutes: 7, available_rooms: 1, created_at: iso(60 * 3) }),
+    buildListing('l_northgate', agents[2], agent3User, { name: 'Northgate Comfort', region: 'north_gate', address: '15 North Gate Road', lat: 7.2965, lng: 5.1455, price: 65000, room_types: ['2_bedroom'], amenities: ['Water', '24hr Light', 'Security', 'Parking', 'Wi-Fi'], walk_minutes: 12, available_rooms: 2, created_at: iso(60 * 24 * 12) }),
+    buildListing('l_futuremasters', agents[2], agent3User, { name: 'Future Masters Lodge', region: 'north_gate', address: '31 Igoba Road, North Gate', lat: 7.2973, lng: 5.1464, price: 20000, room_types: ['shared'], amenities: ['Water', 'Security'], walk_minutes: 18, available_rooms: 10, created_at: iso(60 * 24 * 2) }),
+    buildListing('l_alumni', agents[2], agent3User, { name: 'Alumni Lodge', region: 'north_gate', address: '5 North Gate Extension', lat: 7.2958, lng: 5.1441, price: 35000, room_types: ['self_contain'], amenities: ['Water', '24hr Light', 'Security', 'Fence', 'Parking'], walk_minutes: 9, available_rooms: 6, created_at: iso(60 * 24 * 8) }),
   ];
 
   const conversations: ConvRecord[] = [
@@ -555,6 +557,38 @@ export function allAgentsLocal() {
     const u = db.users.find((x) => x.id === a.user_id);
     return { ...a, name: u?.name, email: u?.email, listing_count: db.listings.filter((l) => l.agent_record_id === a.id).length };
   });
+}
+
+export function reviewAgentLocal(id: string, action: string, note?: string) {
+  const a = db.agents.find((x) => x.id === id);
+  if (!a) return;
+  if (action === 'approve') { a.verified = true; a.status = 'approved'; }
+  else if (action === 'suspend') { a.status = 'suspended'; }
+  else if (action === 'ban') { a.status = 'banned'; a.verified = false; }
+  a.approval_note = note;
+  persist();
+  bus.emit('agent_status', { agentId: id, status: a.status });
+}
+
+export function deleteAgentLocal(id: string): boolean {
+  const agent = db.agents.find((a) => a.id === id);
+  if (!agent) return false;
+  const userId = agent.user_id;
+  const listingIds = db.listings.filter((l) => l.agent_record_id === id).map((l) => l.id);
+  const convIds = db.conversations.filter((c) => c.participants.includes(userId)).map((c) => c.id);
+
+  db.agents = db.agents.filter((a) => a.id !== id);
+  db.users = db.users.filter((u) => u.id !== userId);
+  db.listings = db.listings.filter((l) => !listingIds.includes(l.id));
+  db.bookings = db.bookings.filter((b) => !listingIds.includes(b.listing_id));
+  db.conversations = db.conversations.filter((c) => !convIds.includes(c.id));
+  convIds.forEach((cid) => { delete db.messages[cid]; });
+  Object.keys(db.saved).forEach((uid) => {
+    db.saved[uid] = (db.saved[uid] ?? []).filter((lid) => !listingIds.includes(lid));
+  });
+  persist();
+  bus.emit('agent_status', { agentId: id, status: 'deleted' });
+  return true;
 }
 
 export function adminBookingsLocal() {

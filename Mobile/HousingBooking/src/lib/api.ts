@@ -28,6 +28,9 @@ import {
   messagesLocal,
   sendMessageLocal,
   bookingInviteLocal,
+  allAgentsLocal,
+  reviewAgentLocal,
+  deleteAgentLocal,
 } from './mock';
 
 export const TOKEN_KEY = 'hb_token';
@@ -225,6 +228,26 @@ export const messagesApi = {
   async bookingInvite(d: { conversation_id: string; booking_id: string }) {
     await delay();
     bookingInviteLocal(d.conversation_id, d.booking_id);
+    return { success: true };
+  },
+};
+
+export const adminApi = {
+  async allAgents() {
+    await delay();
+    await currentUser();
+    return { agents: allAgentsLocal() };
+  },
+  async reviewAgent(id: string, action: string, note?: string) {
+    await delay();
+    await currentUser();
+    reviewAgentLocal(id, action, note);
+    return { success: true };
+  },
+  async deleteAgent(id: string) {
+    await delay();
+    await currentUser();
+    deleteAgentLocal(id);
     return { success: true };
   },
 };

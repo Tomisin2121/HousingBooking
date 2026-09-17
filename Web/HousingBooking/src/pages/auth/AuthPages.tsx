@@ -22,6 +22,7 @@ export function LoginPage() {
       const data = await authApi.login({ email, password });
       setAuth(data.token, data.user, data.agent || null);
       if (data.user.role === 'admin') navigate('/admin');
+      else if (data.user.role === 'agent') navigate('/agent');
       else navigate('/');
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Login failed');
@@ -115,7 +116,7 @@ export function SignupPage() {
         data = await authApi.signupAgent({ name, email, password, business_name: businessName, phone, id_document_url: idDocUrl || 'https://placeholder.doc' });
       }
       setAuth(data.token, data.user, data.agent || null);
-      navigate('/');
+      navigate(type === 'agent' ? '/agent' : '/');
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Signup failed');
     } finally {

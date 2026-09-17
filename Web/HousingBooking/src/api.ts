@@ -26,6 +26,7 @@ import {
   bookingInviteLocal,
   allAgentsLocal,
   reviewAgentLocal,
+  deleteAgentLocal,
   moderateListingLocal,
   adminBookingsLocal,
   adminTransactionsLocal,
@@ -157,6 +158,10 @@ export const adminApi = {
   allAgents: () => resolve({ agents: allAgentsLocal() }),
   reviewAgent: (id: string, action: string, note?: string) => {
     reviewAgentLocal(id, action, note);
+    return resolve({ success: true });
+  },
+  deleteAgent: (id: string) => {
+    deleteAgentLocal(id);
     return resolve({ success: true });
   },
   allListings: () => resolve({ listings: listListingsLocal() }),

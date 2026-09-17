@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { User, Mail, BookOpen, CreditCard, Settings, LogOut, Bookmark, Shield, Building2, DollarSign, ChevronRight, Upload, Edit2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { User, Mail, BookOpen, CreditCard, Settings, LogOut, Bookmark, Shield, Building2, DollarSign, ChevronRight, Upload, Edit2, LayoutDashboard } from 'lucide-react';
 import { useAuthStore, useBookingStore } from '../../store';
 import { bookingsApi, listingsApi, authApi, paymentsApi } from '../../api';
 import { Avatar, Badge, Button, Card, Input, Modal } from '../../components/ui';
@@ -8,6 +9,7 @@ import { BOOKING_STATUS_LABELS, BOOKING_STATUS_COLORS } from '../../types';
 
 export function ProfilePage({ onLogout }: { onLogout: () => void }) {
   const { user, agent, setAuth } = useAuthStore();
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [saved, setSaved] = useState<any[]>([]);
   const [activeSection, setActiveSection] = useState<'bookings' | 'saved' | 'settings'>('bookings');
@@ -44,6 +46,11 @@ export function ProfilePage({ onLogout }: { onLogout: () => void }) {
           <Button variant="ghost" size="sm" onClick={() => setShowPasswordModal(true)}>
             <Shield size={14} className="mr-1" /> Change Password
           </Button>
+          {user?.role === 'agent' && (
+            <Button size="sm" onClick={() => navigate('/agent')}>
+              <LayoutDashboard size={14} className="mr-1" /> Agent Dashboard
+            </Button>
+          )}
         </div>
       </div>
 

@@ -10,7 +10,7 @@ import { BOOKING_STATUS_LABELS, BOOKING_STATUS_COLORS, REGION_LABELS } from '../
 export function AgentDashboard() {
   const { user, agent, logout } = useAuthStore();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'listings' | 'bookings' | 'earnings' | 'new'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'bookings' | 'earnings' | 'new'>('new');
   const [listings, setListings] = useState<Listing[]>([]);
   const { agentBookings, setAgentBookings } = useBookingStore();
 
@@ -30,10 +30,10 @@ export function AgentDashboard() {
   }, [user]);
 
   const tabs = [
+    { id: 'new' as const, icon: Plus, label: 'Post Listing' },
     { id: 'listings' as const, icon: Building2, label: 'My Listings' },
     { id: 'bookings' as const, icon: CreditCard, label: 'Bookings' },
     { id: 'earnings' as const, icon: DollarSign, label: 'Earnings' },
-    { id: 'new' as const, icon: Plus, label: 'New Listing' },
   ];
 
   return (
@@ -50,6 +50,7 @@ export function AgentDashboard() {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-ink-soft">{user?.name}</span>
+          <Button size="sm" onClick={() => setActiveTab('new')}>+ Post Listing</Button>
           <Button variant="ghost" size="sm" onClick={() => navigate('/')}>← App</Button>
           <Button variant="ghost" size="sm" onClick={() => { logout(); navigate('/login'); }}>Logout</Button>
         </div>

@@ -15,6 +15,7 @@ export interface Agent {
   phone: string;
   verified: boolean;
   status: 'pending' | 'approved' | 'suspended' | 'banned';
+  approval_note?: string;
   created_at: string;
 }
 
@@ -47,6 +48,7 @@ export interface Listing {
   caution_fee: number;
   total_estimate: number;
   is_saved?: boolean;
+  created_at?: string;
 }
 
 export type BookingStatus = 'requested' | 'pending_payment' | 'paid' | 'confirmed' | 'active' | 'completed' | 'cancelled' | 'disputed';

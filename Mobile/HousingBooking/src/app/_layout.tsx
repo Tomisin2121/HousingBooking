@@ -42,6 +42,8 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="listing/[id]" options={{ headerShown: true, title: 'Listing' }} />
         <Stack.Screen name="chat/[id]" />
+        <Stack.Screen name="agent/index" options={{ headerShown: false }} />
+        <Stack.Screen name="admin/index" options={{ headerShown: false }} />
       </Stack>
     </>
   );
