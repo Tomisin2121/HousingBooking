@@ -119,12 +119,12 @@ export default function ProfileScreen() {
 
         {/* Role entry points */}
         {user?.role === 'agent' && (
-          <Button variant="primary" onPress={() => router.push('/agent/index')} style={styles.entryBtn}>
+          <Button variant="primary" onPress={() => router.push('/agent')} style={styles.entryBtn}>
             <MaterialIcons name="storefront" size={16} color={Colors.light.white} style={{ marginRight: 6 }} /> Agent Dashboard
           </Button>
         )}
         {user?.role === 'admin' && (
-          <Button variant="primary" onPress={() => router.push('/admin/index')} style={styles.entryBtn}>
+          <Button variant="primary" onPress={() => router.push('/admin')} style={styles.entryBtn}>
             <MaterialIcons name="shield" size={16} color={Colors.light.white} style={{ marginRight: 6 }} /> Admin Portal
           </Button>
         )}
