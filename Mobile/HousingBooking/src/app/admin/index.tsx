@@ -19,9 +19,14 @@ interface AdminAgent {
 
 export default function AdminPortalScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [agents, setAgents] = useState<AdminAgent[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    router.replace('/login');
+  };
 
   const load = useCallback(async () => {
     try {
@@ -97,7 +102,10 @@ export default function AdminPortalScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: Spacing.xs }}>
             <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.light.text, flex: 1 }}>Admin Portal</Text>
           </View>
-          <Text style={{ color: Colors.light.textSoft, fontSize: 13, marginTop: Spacing.sm }}>{user?.name}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: Spacing.sm }}>
+            <Text style={{ color: Colors.light.textSoft, fontSize: 13 }}>{user?.name}</Text>
+            <Button size="sm" variant="ghost" onPress={handleLogout}>Logout</Button>
+          </View>
         </View>
 
         <View style={{ paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg }}>
