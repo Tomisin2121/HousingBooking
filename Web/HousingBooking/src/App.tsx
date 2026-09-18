@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuthStore, useFeedStore, useUIStore, useChatStore } from './store';
-import { authApi, listingsApi, messagesApi } from './api';
+import { authApi, messagesApi } from './api';
 import { AppSidebar, BottomNav, FeedColumn, FilterColumn, ListingDetailModal } from './layouts/MainLayout';
 import { MapPanel } from './pages/map/MapPage';
 import { ConversationList, ChatView } from './pages/chat/ChatPage';
@@ -55,12 +55,6 @@ function WebApp() {
   const { activeTab, setActiveTab, rightPanelOpen, setRightPanel } = useUIStore();
   const { listings, selectedId } = useFeedStore();
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
-
-  useEffect(() => {
-    if (listings.length === 0) {
-      listingsApi.list({}).then((d) => useFeedStore.getState().setListings(d.listings || []));
-    }
-  }, []);
 
   const handleSelectListing = (id: string) => {
     const l = listings.find((x) => x.id === id);
