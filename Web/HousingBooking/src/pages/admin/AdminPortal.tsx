@@ -28,23 +28,23 @@ export function AdminPortal() {
   return (
     <div className="min-h-screen bg-surf">
       {/* Header */}
-      <header className="bg-white border-b border-line px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+      <header className="bg-white border-b border-line px-4 lg:px-6 py-3 lg:py-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div className="flex items-center gap-2 lg:gap-3">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shrink-0">
             <Shield size={18} className="text-white" />
           </div>
-          <h1 className="font-bold text-lg">Admin Portal</h1>
+          <h1 className="font-bold text-sm lg:text-lg">Admin Portal</h1>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-ink-soft">{user?.name}</span>
+        <div className="flex items-center gap-1.5 lg:gap-3 flex-wrap">
+          <span className="hidden lg:inline text-sm text-ink-soft">{user?.name}</span>
           <Button variant="ghost" size="sm" onClick={() => navigate('/')}>← Back to App</Button>
           <Button variant="ghost" size="sm" onClick={() => { logout(); navigate('/login'); }}>Logout</Button>
         </div>
       </header>
 
-      <div className="flex h-[calc(100vh-65px)]">
-        {/* Tab nav */}
-        <nav className="w-52 bg-white border-r border-line p-3 space-y-1">
+      <div className="lg:h-[calc(100vh-65px)] lg:flex">
+        {/* Tab nav (desktop) */}
+        <nav className="hidden lg:block w-52 bg-white border-r border-line p-3 space-y-1">
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -57,8 +57,22 @@ export function AdminPortal() {
           ))}
         </nav>
 
+        {/* Tab nav (mobile) */}
+        <nav className="lg:hidden sticky top-0 z-10 bg-white border-b border-line px-4 py-2.5 flex gap-2 overflow-x-auto">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`shrink-0 px-3.5 py-2 rounded-full text-sm font-medium transition-all
+                ${activeTab === t.id ? 'bg-primary text-white' : 'text-ink-soft hover:bg-surf border border-line'}`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6">
           {activeTab === 'agents' && <AgentsPanel />}
           {activeTab === 'listings' && <ListingsPanel />}
           {activeTab === 'bookings' && <BookingsPanel />}
@@ -106,13 +120,13 @@ function AgentsPanel() {
           <div className="space-y-2">
             {pending.map((a) => (
               <Card key={a.id} className="p-4 border-yellow-200 bg-yellow-50">
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  <div className="min-w-0">
                     <p className="font-medium">{a.business_name}</p>
                     <p className="text-sm text-ink-soft">{a.name} | {a.email} | {a.phone}</p>
                     <a href={a.id_document_url} target="_blank" className="text-sm text-primary underline">View ID Document</a>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <Button size="sm" onClick={() => handleReview(a.id, 'approve')}>Approve</Button>
                     <Button variant="danger" size="sm" onClick={() => handleReview(a.id, 'ban')}>Reject</Button>
                     <Button variant="danger" size="sm" onClick={() => handleDelete(a.id)}>Delete</Button>
@@ -127,7 +141,8 @@ function AgentsPanel() {
       <div>
         <h3 className="font-bold mb-3">All Agents</h3>
         <div className="bg-white rounded-xl border border-line overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[560px]">
             <thead className="bg-surf border-b border-line">
               <tr><th className="text-left p-3">Agent</th><th className="text-left p-3">Status</th><th className="text-left p-3">Listings</th><th className="text-left p-3">Actions</th></tr>
             </thead>
@@ -151,6 +166,7 @@ function AgentsPanel() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </div>
@@ -176,7 +192,8 @@ function ListingsPanel() {
 
   return (
     <div className="bg-white rounded-xl border border-line overflow-hidden">
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full text-sm min-w-[640px]">
         <thead className="bg-surf border-b border-line">
           <tr><th className="text-left p-3">Listing</th><th className="text-left p-3">Agent</th><th className="text-left p-3">Price</th><th className="text-left p-3">Region</th><th className="text-left p-3">Available</th><th className="text-left p-3">Actions</th></tr>
         </thead>
@@ -188,18 +205,21 @@ function ListingsPanel() {
               <td className="p-3">₦{Number(l.price).toLocaleString()}</td>
               <td className="p-3">{l.region}</td>
               <td className="p-3">{l.available ? '✓' : '✗'}</td>
-              <td className="p-3 flex gap-2">
-                {l.available ? (
-                  <Button variant="danger" size="sm" onClick={() => handleModerate(l.id, 'flag')}>Flag</Button>
-                ) : (
-                  <Button size="sm" onClick={() => handleModerate(l.id, 'unflag')}>Unflag</Button>
-                )}
-                <Button variant="danger" size="sm" onClick={() => handleModerate(l.id, 'remove')}>Remove</Button>
+              <td className="p-3">
+                <div className="flex gap-2 flex-wrap">
+                  {l.available ? (
+                    <Button variant="danger" size="sm" onClick={() => handleModerate(l.id, 'flag')}>Flag</Button>
+                  ) : (
+                    <Button size="sm" onClick={() => handleModerate(l.id, 'unflag')}>Unflag</Button>
+                  )}
+                  <Button variant="danger" size="sm" onClick={() => handleModerate(l.id, 'remove')}>Remove</Button>
+                </div>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
@@ -211,7 +231,8 @@ function BookingsPanel() {
   }, []);
   return (
     <div className="bg-white rounded-xl border border-line overflow-hidden">
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full text-sm min-w-[480px]">
         <thead className="bg-surf border-b border-line">
           <tr><th className="text-left p-3">Student</th><th className="text-left p-3">Listing</th><th className="text-left p-3">Total</th><th className="text-left p-3">Status</th></tr>
         </thead>
@@ -226,6 +247,7 @@ function BookingsPanel() {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
@@ -236,7 +258,7 @@ function TransactionsPanel() {
   return (
     <div className="space-y-4">
       {data?.summary && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4">
           {[
             { label: 'Gross Revenue', value: `₦${data.summary.grossRevenue.toLocaleString()}`, color: 'text-primary' },
             { label: 'Platform Fees', value: `₦${data.summary.platformFees.toLocaleString()}`, color: 'text-blue-600' },
@@ -250,7 +272,8 @@ function TransactionsPanel() {
         </div>
       )}
       <div className="bg-white rounded-xl border border-line overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
           <thead className="bg-surf border-b border-line">
             <tr><th className="text-left p-3">Reference</th><th className="text-left p-3">Student</th><th className="text-left p-3">Listing</th><th className="text-left p-3">Amount</th><th className="text-left p-3">Status</th></tr>
           </thead>
@@ -266,6 +289,7 @@ function TransactionsPanel() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
@@ -286,7 +310,8 @@ function UsersPanel() {
           </button>
         ))}
       </div>
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full text-sm min-w-[480px]">
         <thead className="bg-surf border-b border-line">
           <tr><th className="text-left p-3">Name</th><th className="text-left p-3">Email</th><th className="text-left p-3">Role</th><th className="text-left p-3">Joined</th></tr>
         </thead>
@@ -301,6 +326,7 @@ function UsersPanel() {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
