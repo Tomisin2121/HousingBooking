@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, Alert, ScrollView, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
 import { Screen, Button, BadgeView } from '@/components/ui';
 import { useAuth } from '@/lib/store';
 import { adminApi } from '@/lib/api';
@@ -95,10 +94,7 @@ export default function AdminPortalScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md, alignSelf: 'flex-start' }}>
-            <TouchableOpacity onPress={() => router.back()} style={{ padding: 4 }}>
-              <MaterialIcons name="arrow-back" size={22} color={Colors.light.text} />
-            </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md, paddingVertical: Spacing.xs }}>
             <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.light.text, flex: 1 }}>Admin Portal</Text>
           </View>
           <Text style={{ color: Colors.light.textSoft, fontSize: 13, marginTop: Spacing.sm }}>{user?.name}</Text>

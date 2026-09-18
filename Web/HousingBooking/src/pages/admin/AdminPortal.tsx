@@ -37,7 +37,6 @@ export function AdminPortal() {
         </div>
         <div className="flex items-center gap-1.5 lg:gap-3 flex-wrap">
           <span className="hidden lg:inline text-sm text-ink-soft">{user?.name}</span>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/')}>← Back to App</Button>
           <Button variant="ghost" size="sm" onClick={() => { logout(); navigate('/login'); }}>Logout</Button>
         </div>
       </header>
