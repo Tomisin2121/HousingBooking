@@ -38,26 +38,26 @@ export function AgentDashboard() {
 
   return (
     <div className="min-h-screen bg-surf">
-      <header className="bg-white border-b border-line px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+      <header className="bg-white border-b border-line px-4 lg:px-6 py-3 lg:py-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div className="flex items-center gap-2 lg:gap-3 min-w-0">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shrink-0">
             <Building2 size={18} className="text-white" />
           </div>
-          <div>
-            <h1 className="font-bold text-lg">{agent?.business_name || 'Agent Dashboard'}</h1>
+          <div className="min-w-0">
+            <h1 className="font-bold text-sm lg:text-lg truncate">{agent?.business_name || 'Agent Dashboard'}</h1>
             <p className="text-xs text-ink-soft">{agent?.verified ? '✓ Verified' : 'Pending Approval'}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-ink-soft">{user?.name}</span>
-          <Button size="sm" onClick={() => setActiveTab('new')}>+ Post Listing</Button>
+        <div className="flex items-center gap-1.5 lg:gap-3 flex-wrap">
+          <span className="hidden lg:inline text-sm text-ink-soft">{user?.name}</span>
+          <Button size="sm" className="px-3" onClick={() => setActiveTab('new')}>+ Post Listing</Button>
           <Button variant="ghost" size="sm" onClick={() => navigate('/')}>← App</Button>
           <Button variant="ghost" size="sm" onClick={() => { logout(); navigate('/login'); }}>Logout</Button>
         </div>
       </header>
 
-      <div className="flex h-[calc(100vh-65px)]">
-        <nav className="w-48 bg-white border-r border-line p-3 space-y-1">
+      <div className="lg:h-[calc(100vh-65px)] lg:flex">
+        <nav className="hidden lg:block w-48 bg-white border-r border-line p-3 space-y-1">
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -70,7 +70,20 @@ export function AgentDashboard() {
           ))}
         </nav>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <nav className="lg:hidden sticky top-0 z-10 bg-white border-b border-line px-4 py-2.5 flex gap-2 overflow-x-auto">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`shrink-0 px-3.5 py-2 rounded-full text-sm font-medium transition-all
+                ${activeTab === t.id ? 'bg-primary text-white' : 'text-ink-soft hover:bg-surf border border-line'}`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6">
           {activeTab === 'listings' && <AgentListings listings={listings} onRefresh={load} />}
           {activeTab === 'bookings' && <AgentBookings bookings={agentBookings} onRefresh={load} />}
           {activeTab === 'earnings' && <AgentEarnings bookings={agentBookings} />}
@@ -101,15 +114,15 @@ function AgentListings({ listings, onRefresh }: { listings: Listing[]; onRefresh
       {listings.length === 0 ? (
         <p className="text-center text-sm text-ink-soft py-8">No listings yet. Create one!</p>
       ) : listings.map((l) => (
-        <Card key={l.id} className="p-4">
-          <div className="flex gap-4">
-            <img src={l.photos?.[0] || 'https://picsum.photos/seed/ph/400/300'} className="w-24 h-24 rounded-lg object-cover" />
-            <div className="flex-1">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-semibold">{l.name}</h3>
-                  <p className="text-sm text-ink-soft">{l.address}</p>
-                  <div className="flex items-center gap-2 mt-1">
+        <Card key={l.id} className="p-3 lg:p-4">
+          <div className="flex gap-3 lg:gap-4">
+            <img src={l.photos?.[0] || 'https://picsum.photos/seed/ph/400/300'} className="w-20 h-20 lg:w-24 lg:h-24 rounded-lg object-cover shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2 flex-wrap">
+                <div className="min-w-0">
+                  <h3 className="font-semibold truncate">{l.name}</h3>
+                  <p className="text-sm text-ink-soft truncate">{l.address}</p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <Badge variant={
                       l.region === 'west_gate' ? 'blue' : l.region === 'south_gate' ? 'green' : 'orange'
                     }>
@@ -118,9 +131,9 @@ function AgentListings({ listings, onRefresh }: { listings: Listing[]; onRefresh
                     <Badge variant={l.available ? 'green' : 'red'}>{l.available ? 'Active' : 'Inactive'}</Badge>
                   </div>
                 </div>
-                <span className="text-lg font-bold text-primary">₦{l.price.toLocaleString()}</span>
+                <span className="text-base lg:text-lg font-bold text-primary shrink-0">₦{l.price.toLocaleString()}</span>
               </div>
-              <div className="flex gap-2 mt-3">
+              <div className="flex gap-2 mt-2 lg:mt-3 flex-wrap">
                 <Button size="sm" variant="secondary" onClick={() => handleToggle(l.id, l.available)}>
                   {l.available ? <><EyeOff size={14} className="mr-1" /> Deactivate</> : <><Eye size={14} className="mr-1" /> Activate</>}
                 </Button>
@@ -148,8 +161,8 @@ function AgentBookings({ bookings, onRefresh }: { bookings: Booking[]; onRefresh
         <p className="text-center text-sm text-ink-soft py-8">No bookings yet</p>
       ) : bookings.map((b) => (
         <Card key={b.id} className="p-4">
-          <div className="flex items-start justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-2 flex-wrap">
+            <div className="min-w-0">
               <h3 className="font-semibold">{b.listing_name}</h3>
               <p className="text-sm text-ink-soft">{b.student_name} | {b.room_type.replace('_', ' ')} | Move-in: {b.move_in_date}</p>
               <p className="text-xs text-ink-soft mt-1">{REGION_LABELS[b.region]} | ₦{b.total_amount.toLocaleString()}</p>
@@ -183,7 +196,8 @@ function AgentEarnings({ bookings }: { bookings: Booking[] }) {
         </Card>
       </div>
       <div className="bg-white rounded-xl border border-line overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[520px]">
           <thead className="bg-surf border-b border-line">
             <tr><th className="text-left p-3">Listing</th><th className="text-left p-3">Student</th><th className="text-left p-3">Amount</th><th className="text-left p-3">Status</th></tr>
           </thead>
@@ -198,6 +212,7 @@ function AgentEarnings({ bookings }: { bookings: Booking[] }) {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
@@ -239,10 +254,10 @@ function NewListingForm({ onDone }: { onDone: () => void }) {
   return (
     <div className="max-w-xl">
       <h2 className="font-bold text-xl mb-4">Post New Listing</h2>
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-line p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-line p-4 sm:p-6 space-y-4">
         {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded-lg">{error}</p>}
         <Input label="Hostel Name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Select
             label="Region"
             value={form.region}
@@ -260,7 +275,7 @@ function NewListingForm({ onDone }: { onDone: () => void }) {
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input label="Latitude" type="number" value={form.lat} onChange={(e) => setForm({ ...form, lat: e.target.value })} />
           <Input label="Longitude" type="number" value={form.lng} onChange={(e) => setForm({ ...form, lng: e.target.value })} />
         </div>
