@@ -58,8 +58,8 @@ export const Radius = {
 };
 
 export const FUTA_GATE = {
-  lat: 7.2904,
-  lng: 5.1438,
+  lat: 7.3086,
+  lng: 5.137,
 };
 
 export const API_BASE_URL = (() => {
