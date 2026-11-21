@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen, Avatar } from '@/components/ui';
 import { useChat } from '@/lib/store';
@@ -21,7 +21,7 @@ export default function ChatListScreen() {
 
   useEffect(() => {
     messagesApi.conversations().then((d) => setConversations(d.conversations || [])).catch(console.error);
-  }, []);
+  }, [setConversations]);
 
   return (
     <Screen scroll={false}>
@@ -57,7 +57,7 @@ export default function ChatListScreen() {
         contentContainerStyle={{ padding: Spacing.md, paddingBottom: 120 }}
         ListEmptyComponent={
           <View style={{ alignItems: 'center', paddingVertical: 60 }}>
-            <Text style={{ color: Colors.light.textMuted }}>Conversation is empty.{'\n'}Tap "Message Agent" on a listing to start chatting.</Text>
+            <Text style={{ color: Colors.light.textMuted }}>Conversation is empty.{'\n'}Tap &quot;Message Agent&quot; on a listing to start chatting.</Text>
           </View>
         }
       />

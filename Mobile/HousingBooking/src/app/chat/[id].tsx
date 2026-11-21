@@ -3,7 +3,7 @@ import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, Keyboard
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Avatar, BadgeView, Button } from '@/components/ui';
+import { Avatar, BadgeView } from '@/components/ui';
 import { Colors, Spacing, Radius } from '@/constants/theme';
 import { messagesApi } from '@/lib/api';
 import { useChat, useAuth } from '@/lib/store';
@@ -19,14 +19,25 @@ export default function ChatScreen() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [typing, setTyping] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   const flatRef = useRef<FlatList>(null);
-  const typingTimeout = useRef<any>(null);
 
   useEffect(() => {
     if (!id) return;
-    messagesApi.list(id).then((d) => setMessages(d.messages || []));
+    let cancelled = false;
+    messagesApi.list(id)
+      .then((d) => { if (!cancelled) setMessages(d.messages || []); })
+      .catch(() => { if (!cancelled) setNotFound(true); });
+    messagesApi.get(id)
+      .then((d) => {
+        if (cancelled) return;
+        setNotFound(false);
+        const current = useChat.getState().conversations;
+        useChat.getState().setConversations([d.conversation, ...current.filter((c) => c.id !== d.conversation.id)]);
+      })
+      .catch(() => { if (!cancelled) setNotFound(true); });
     markRead(id);
-    socket?.emit('join_conversation', id);
+    messagesApi.setActive(id).catch(() => {});
 
     const onMsg = ({ conversation_id, message }: { conversation_id: string; message: Message }) => {
       if (conversation_id === id) {
@@ -40,11 +51,12 @@ export default function ChatScreen() {
     socket?.on('typing', onTyping);
 
     return () => {
+      cancelled = true;
       socket?.off('new_message', onMsg);
       socket?.off('typing', onTyping);
-      socket?.emit('leave_conversation', id);
+      messagesApi.setActive(null).catch(() => {});
     };
-  }, [id, socket]);
+  }, [id, socket, markRead]);
 
   useEffect(() => {
     if (messages.length) flatRef.current?.scrollToEnd({ animated: true });
@@ -54,21 +66,18 @@ export default function ChatScreen() {
     const content = input.trim();
     if (!content || !id) return;
     setInput('');
-    socket?.emit('typing', { conversationId: id, isTyping: false });
     setSending(true);
     try {
-      await messagesApi.send({ conversation_id: id, content });
+      const { message } = await messagesApi.send({ conversation_id: id, content });
+      setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
+    } catch {
+      setInput(content);
     } finally {
       setSending(false);
     }
   };
 
-  const handleTyping = (val: string) => {
-    setInput(val);
-    socket?.emit('typing', { conversationId: id, isTyping: true });
-    clearTimeout(typingTimeout.current);
-    typingTimeout.current = setTimeout(() => socket?.emit('typing', { conversationId: id, isTyping: false }), 1500);
-  };
+  const handleTyping = (val: string) => setInput(val);
 
   const renderBubble = ({ item: msg, index }: { item: Message; index: number }) => {
     if (msg.type === 'system' || msg.type === 'booking_invite') {
@@ -105,8 +114,17 @@ export default function ChatScreen() {
   if (!conversation) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={Colors.light.primary} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md }}>
+          {notFound ? (
+            <>
+              <Text style={{ color: Colors.light.textSoft }}>Conversation not found</Text>
+              <TouchableOpacity onPress={() => router.back()}>
+                <Text style={{ color: Colors.light.primary, fontWeight: '600' }}>Go back</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <ActivityIndicator color={Colors.light.primary} />
+          )}
         </View>
       </SafeAreaView>
     );

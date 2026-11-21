@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, ScrollView, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Screen, Button, Input, Chip, BadgeView } from '@/components/ui';
+import { Screen, Button, Input, Chip, BadgeView, Photo } from '@/components/ui';
 import { useAuth } from '@/lib/store';
 import { listingsApi, bookingsApi } from '@/lib/api';
 import type { Listing, Booking, Region, RoomType } from '@/lib/types';
@@ -40,7 +40,7 @@ export default function AgentDashboardScreen() {
 
   useEffect(() => {
     if (user?.role !== 'agent') router.replace('/(tabs)/feed');
-  }, [user]);
+  }, [user, router]);
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
@@ -77,12 +77,12 @@ export default function AgentDashboardScreen() {
             {tab === 'listings' && (
               listings.length === 0 ? (
                 <Text style={{ textAlign: 'center', color: Colors.light.textMuted, paddingVertical: 48 }}>
-                  No listings yet. Tap "New Listing" to post one.
+                  No listings yet. Tap &quot;New Listing&quot; to post one.
                 </Text>
               ) : listings.map((l) => (
                 <View key={l.id} style={styles.card}>
                   <View style={{ flexDirection: 'row' }}>
-                    <Image source={{ uri: l.photos?.[0] || 'https://picsum.photos/seed/ph/400/300' }} style={{ width: 72, height: 72, borderRadius: Radius.sm }} />
+                    <Photo source={l.photos?.[0]} style={{ width: 72, height: 72, borderRadius: Radius.sm }} />
                     <View style={{ marginLeft: Spacing.md, flex: 1 }}>
                       <Text style={{ fontWeight: '700', color: Colors.light.text, fontSize: 14 }}>{l.name}</Text>
                       <Text style={{ color: Colors.light.textSoft, fontSize: 12 }}>{l.address}</Text>

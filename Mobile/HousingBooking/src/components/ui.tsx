@@ -1,10 +1,38 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ActivityIndicator, Image, StyleSheet, ScrollView,
   Modal as RNModal, Platform, KeyboardAvoidingView,
 } from 'react-native';
+import type { ImageResizeMode, ImageSourcePropType, ImageStyle, StyleProp } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { FALLBACK_PHOTO, photoSource } from '@/lib/placeholders';
+
+export function Photo({
+  source,
+  style,
+  resizeMode = 'cover',
+}: {
+  source?: string;
+  style?: StyleProp<ImageStyle>;
+  resizeMode?: ImageResizeMode;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [source]);
+
+  const resolved: ImageSourcePropType = failed ? FALLBACK_PHOTO : photoSource(source);
+  return (
+    <Image
+      source={resolved}
+      style={style}
+      resizeMode={resizeMode}
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 export function useColors() {
   return Colors.light;
@@ -130,8 +158,18 @@ export function Avatar({ src, name, size = 'md' }: { src?: string; name: string;
   const dims = { sm: 32, md: 40, lg: 56 }[size];
   const fs = { sm: 11, md: 14, lg: 20 }[size];
   const initials = name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
-  return src ? (
-    <Image source={{ uri: src }} style={{ width: dims, height: dims, borderRadius: dims / 2 }} />
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  return src && !failed ? (
+    <Image
+      source={photoSource(src)}
+      style={{ width: dims, height: dims, borderRadius: dims / 2 }}
+      onError={() => setFailed(true)}
+    />
   ) : (
     <View style={{ width: dims, height: dims, borderRadius: dims / 2, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
       <Text style={{ color: C.primary, fontSize: fs, fontWeight: '700' }}>{initials}</Text>

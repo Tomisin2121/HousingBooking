@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { User, Agent, Listing, Conversation, Message, Booking, Region, RoomType } from './types';
+import { roomPriceFor } from './types';
+import { isOldPhoto, placeholderFor } from './placeholders';
 
 export const DEMO_CREDENTIALS = [
   { role: 'Student', email: 'student@housingbooking.app', password: 'Password123!' },
@@ -54,7 +56,7 @@ function buildListing(
     agent_record_id: agent.id,
     description: p.description ?? 'A comfortable, secure hostel close to FUTA main gate with reliable utilities and easy access to campus.',
     amenities: p.amenities ?? ['Water', '24hr Light', 'Security'],
-    photos: p.photos ?? [`https://picsum.photos/seed/${id}/800/600`, `https://picsum.photos/seed/${id}b/800/600`],
+    photos: p.photos ?? [placeholderFor(id), placeholderFor(`${id}b`)],
     available_rooms: p.available_rooms ?? 6,
     available: p.available ?? true,
     walk_minutes: p.walk_minutes ?? 12,
@@ -141,13 +143,17 @@ export function buildSeed(): DB {
   const bk = (
     id: string, listing: Listing, studentName: string, roomType: RoomType, status: Booking['status'],
     moveIn: string, createdMinsAgo: number
-  ): Booking => ({
-    id, student_id: 'u_student', listing_id: listing.id, room_type: roomType, move_in_date: moveIn, status,
-    rent_amount: listing.price, platform_fee: listing.platform_fee, caution_fee: listing.caution_fee,
-    total_amount: listing.total_estimate, listing_name: listing.name, region: listing.region,
-    address: listing.address, photos: listing.photos, student_name: studentName,
-    business_name: listing.business_name, created_at: iso(createdMinsAgo),
-  });
+  ): Booking => {
+    const rent = roomPriceFor(roomType, listing.price);
+    const platformFee = Math.round(rent * 0.02);
+    return {
+      id, student_id: 'u_student', listing_id: listing.id, room_type: roomType, move_in_date: moveIn, status,
+      rent_amount: rent, platform_fee: platformFee, caution_fee: listing.caution_fee,
+      total_amount: rent + platformFee + listing.caution_fee, listing_name: listing.name, region: listing.region,
+      address: listing.address, photos: listing.photos, student_name: studentName,
+      business_name: listing.business_name, created_at: iso(createdMinsAgo),
+    };
+  };
 
   const bookings: Booking[] = [
     bk('bk_1', listings[0], 'Tunde Adebayo', 'self_contain', 'paid', '2026-10-02', 60 * 24 * 3),
@@ -169,10 +175,24 @@ export function buildSeed(): DB {
 
 let db: DB = buildSeed();
 
+function migratePhotos(source: DB): DB {
+  for (const listing of source.listings) {
+    listing.photos = listing.photos?.map((photo, i) =>
+      isOldPhoto(photo) ? placeholderFor(`${listing.id}-${i}`) : photo,
+    ) ?? [];
+  }
+  for (const booking of source.bookings) {
+    booking.photos = booking.photos?.map((photo, i) =>
+      isOldPhoto(photo) ? placeholderFor(`${booking.id}-${i}`) : photo,
+    ) ?? [];
+  }
+  return source;
+}
+
 export async function hydrateMock() {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    if (raw) db = JSON.parse(raw) as DB;
+    if (raw) db = migratePhotos(JSON.parse(raw) as DB);
   } catch { /* ignore */ }
 }
 
@@ -181,9 +201,15 @@ function persist() {
 }
 
 let currentUserId: string | null = null;
+let activeConversationId: string | null = null;
 
 export function setCurrentUserId(id: string | null) {
   currentUserId = id;
+  if (id === null) activeConversationId = null;
+}
+
+export function setActiveConversation(id: string | null) {
+  activeConversationId = id;
 }
 
 export function getCurrentUser(): DBUser | null {
@@ -201,30 +227,27 @@ function makeToken(userId: string) {
 }
 
 export function loginLocal(email: string, password: string): { token: string; user: User; agent: Agent | null } | null {
-  if (password !== 'Password123!') return null;
-  let user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-  if (!user) {
-    user = {
-      id: `u_${Math.random().toString(36).slice(2, 9)}`,
-      name: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-      email,
-      role: 'student',
-      password: 'Password123!',
-      created_at: iso(0),
-    };
-    db.users.push(user);
-    persist();
-  }
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = db.users.find((u) => u.email.toLowerCase() === normalizedEmail);
+  if (!user || user.password !== password) return null;
   currentUserId = user.id;
   const agent = db.agents.find((a) => a.user_id === user.id) ?? null;
   const { password: _pw, ...safeUser } = user;
   return { token: makeToken(user.id), user: safeUser, agent };
 }
 
+function ensureUniqueEmail(email: string) {
+  const normalized = email.trim().toLowerCase();
+  if (!/^\S+@\S+\.\S+$/.test(normalized)) throw new Error('Enter a valid email address');
+  if (db.users.some((u) => u.email.toLowerCase() === normalized)) throw new Error('An account with this email already exists');
+  return normalized;
+}
+
 export function signupStudentLocal(data: { name: string; email: string; password: string; matric_no?: string; department?: string }) {
+  const email = ensureUniqueEmail(data.email);
   const user: DBUser = {
     id: `u_${Math.random().toString(36).slice(2, 9)}`,
-    name: data.name, email: data.email, password: data.password || 'Password123!',
+    name: data.name.trim(), email, password: data.password || 'Password123!',
     role: 'student', matric_no: data.matric_no, department: data.department, created_at: iso(0),
   };
   db.users.push(user);
@@ -235,9 +258,10 @@ export function signupStudentLocal(data: { name: string; email: string; password
 }
 
 export function signupAgentLocal(data: { name: string; email: string; password: string; business_name: string; phone: string; id_document_url: string }) {
+  const email = ensureUniqueEmail(data.email);
   const user: DBUser = {
     id: `u_${Math.random().toString(36).slice(2, 9)}`,
-    name: data.name, email: data.email, password: data.password || 'Password123!', role: 'agent', created_at: iso(0),
+    name: data.name.trim(), email, password: data.password || 'Password123!', role: 'agent', created_at: iso(0),
   };
   const agent: Agent = {
     id: `ag_${Math.random().toString(36).slice(2, 9)}`,
@@ -254,9 +278,10 @@ export function signupAgentLocal(data: { name: string; email: string; password: 
 
 export function updateUserLocal(id: string, patch: Partial<DBUser>) {
   const u = db.users.find((x) => x.id === id);
-  if (u) Object.assign(u, patch);
+  if (!u) return { user: null };
+  Object.assign(u, patch);
   persist();
-  const { password: _pw, ...safeUser } = u!;
+  const { password: _pw, ...safeUser } = u;
   return { user: safeUser };
 }
 
@@ -295,7 +320,7 @@ export function createListingLocal(data: any): Listing {
   const listing = buildListing(`l_${Math.random().toString(36).slice(2, 9)}`, agent, agentUser, {
     name: data.name, region: data.region, address: data.address, price: Number(data.price),
     room_types: data.room_types ?? ['shared'], description: data.description,
-    amenities: data.amenities ?? [], photos: data.photos?.length ? data.photos : [`https://picsum.photos/seed/${data.name.replace(/\s/g, '')}/800/600`],
+    amenities: data.amenities ?? [], photos: data.photos?.length ? data.photos : [placeholderFor(data.name)],
     available_rooms: Number(data.available_rooms ?? 1), lat: data.lat, lng: data.lng,
     walk_minutes: data.walk_minutes ? Number(data.walk_minutes) : undefined,
     available: data.available ?? true,
@@ -346,6 +371,8 @@ export function savedListingsLocal(): Listing[] {
 
 function computeBooking(listing: Listing, roomType: RoomType, moveIn: string): Booking {
   const me = getCurrentUser()!;
+  const rent = roomPriceFor(roomType, listing.price);
+  const platformFee = Math.round(rent * 0.02);
   return {
     id: `bk_${Math.random().toString(36).slice(2, 9)}`,
     student_id: me.id,
@@ -353,10 +380,10 @@ function computeBooking(listing: Listing, roomType: RoomType, moveIn: string): B
     room_type: roomType,
     move_in_date: moveIn,
     status: 'pending_payment',
-    rent_amount: listing.price,
-    platform_fee: listing.platform_fee,
+    rent_amount: rent,
+    platform_fee: platformFee,
     caution_fee: listing.caution_fee,
-    total_amount: listing.total_estimate,
+    total_amount: rent + platformFee + listing.caution_fee,
     listing_name: listing.name,
     region: listing.region,
     address: listing.address,
@@ -397,6 +424,10 @@ export function setBookingStatusLocal(id: string, status: Booking['status']) {
   return b;
 }
 
+export function payBookingLocal(id: string): Booking | undefined {
+  return setBookingStatusLocal(id, 'paid');
+}
+
 // ─── Conversations / Messages ────────────────────────────────────────────────
 
 export function conversationsLocal(): Conversation[] {
@@ -431,6 +462,18 @@ export function conversationsLocal(): Conversation[] {
   return out.sort((a, b) => +new Date(b.last_message_at || 0) - +new Date(a.last_message_at || 0));
 }
 
+export function getConversationLocal(id: string): Conversation | null {
+  return conversationsLocal().find((c) => c.id === id) ?? null;
+}
+
+export function markConversationReadLocal(id: string) {
+  const me = getCurrentUser();
+  const conv = db.conversations.find((c) => c.id === id);
+  if (!me || !conv) return;
+  conv.unread[me.id] = 0;
+  persist();
+}
+
 export function startConversationLocal(listingId: string): Conversation | null {
   const me = getCurrentUser();
   if (!me) return null;
@@ -462,16 +505,19 @@ function inlineUserMsg(agentRecordId: string, content: string) {
   });
   if (!conv) return;
   db.messages[conv.id] = db.messages[conv.id] ?? [];
-  db.messages[conv.id].push({
+  const msg: Message = {
     id: `m_${Math.random().toString(36).slice(2, 9)}`,
     conversation_id: conv.id,
     sender_id: me.id,
     content,
     type: 'text',
     created_at: iso(0),
-  });
-  conv.unread[me.id] = 0;
+  };
+  db.messages[conv.id].push(msg);
+  const peerId = conv.participants.find((p) => p !== me.id);
+  if (peerId) conv.unread[peerId] = (conv.unread[peerId] ?? 0) + 1;
   persist();
+  bus.emit('new_message', { conversation_id: conv.id, message: msg });
 }
 
 export function sendMessageLocal(convId: string, content: string): Message {
@@ -488,6 +534,7 @@ export function sendMessageLocal(convId: string, content: string): Message {
   db.messages[convId] = db.messages[convId] ?? [];
   db.messages[convId].push(msg);
   persist();
+  bus.emit('new_message', { conversation_id: convId, message: msg });
   if (conv) scheduleAgentReply(convId);
   return msg;
 }
@@ -528,7 +575,7 @@ function scheduleAgentReply(convId: string) {
     db.messages[convId] = db.messages[convId] ?? [];
     db.messages[convId].push(msg);
     const me = getCurrentUser();
-    if (me && peerId !== me.id) {
+    if (me && peerId !== me.id && activeConversationId !== convId) {
       conv.unread[me.id] = (conv.unread[me.id] ?? 0) + 1;
     }
     persist();
@@ -539,7 +586,7 @@ function scheduleAgentReply(convId: string) {
 export function bookingInviteLocal(convId: string, bookingId: string) {
   const booking = db.bookings.find((b) => b.id === bookingId);
   db.messages[convId] = db.messages[convId] ?? [];
-  db.messages[convId].push({
+  const msg: Message = {
     id: `m_${Math.random().toString(36).slice(2, 9)}`,
     conversation_id: convId,
     sender_id: getCurrentUser()?.id,
@@ -549,8 +596,10 @@ export function bookingInviteLocal(convId: string, bookingId: string) {
     type: 'booking_invite',
     meta: { booking_id: bookingId },
     created_at: iso(0),
-  });
+  };
+  db.messages[convId].push(msg);
   persist();
+  bus.emit('new_message', { conversation_id: convId, message: msg });
 }
 
 // ─── Admin helpers (used by web; kept for parity) ───────────────────────────
@@ -600,6 +649,43 @@ export function adminBookingsLocal() {
 
 export function allBookingsLocal() {
   return db.bookings;
+}
+
+export function moderateListingLocal(id: string, action: string) {
+  const l = db.listings.find((x) => x.id === id);
+  if (!l) return;
+  if (action === 'flag') l.available = false;
+  else if (action === 'unflag') l.available = true;
+  else if (action === 'remove') db.listings = db.listings.filter((x) => x.id !== id);
+  persist();
+}
+
+export function adminTransactionsLocal() {
+  const finances = ['paid', 'confirmed', 'active', 'completed', 'disputed'];
+  const tx = db.bookings
+    .filter((b) => finances.includes(b.status))
+    .map((b, i) => ({
+      id: `tx_${b.id}`,
+      paystack_ref: `PSK_${b.id.toUpperCase()}${i}Z`,
+      student_name: b.student_name,
+      listing_name: b.listing_name,
+      amount: b.total_amount,
+      status: b.status,
+    }));
+  return {
+    summary: {
+      grossRevenue: tx.reduce((s, t) => s + t.amount, 0),
+      platformFees: db.bookings.reduce((s, b) => s + b.platform_fee, 0),
+      released: db.bookings.filter((b) => ['active', 'completed'].includes(b.status)).reduce((s, b) => s + b.rent_amount, 0),
+    },
+    transactions: tx,
+  };
+}
+
+export function adminUsersLocal(role?: string) {
+  return db.users
+    .filter((u) => !role || u.role === role)
+    .map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, created_at: u.created_at ?? iso(60 * 24 * 90) }));
 }
 
 // ─── Mock "socket" bus ───────────────────────────────────────────────────────

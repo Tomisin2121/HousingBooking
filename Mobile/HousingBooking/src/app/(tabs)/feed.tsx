@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, FlatList, TextInput, TouchableOpacity, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Screen, Chip, BadgeView, Avatar, Button } from '@/components/ui';
+import { Screen, Chip, BadgeView, Avatar, Button, Photo } from '@/components/ui';
 import { Colors, Spacing, Radius } from '@/constants/theme';
 import { useFeed } from '@/lib/store';
 import { listingsApi, messagesApi } from '@/lib/api';
@@ -74,7 +74,7 @@ function ListingCardView({ listing, onOpen, onMessage, onBook }: {
       </View>
 
       {/* Photo */}
-      <Image source={{ uri: listing.photos?.[0] || 'https://picsum.photos/seed/placeholder/400/300' }} style={styles.cardImg} />
+      <Photo source={listing.photos?.[0]} style={styles.cardImg} />
 
       {/* Body */}
       <View style={styles.cardBody}>
@@ -121,7 +121,7 @@ export default function FeedScreen() {
       .then((d) => setListings(d.listings || []))
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [filters]);
+  }, [filters, setListings]);
 
   const filtered = listings.filter(
     (l) => !search || l.name.toLowerCase().includes(search.toLowerCase()) || l.address.toLowerCase().includes(search.toLowerCase())

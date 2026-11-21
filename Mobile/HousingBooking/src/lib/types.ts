@@ -51,6 +51,17 @@ export interface Listing {
   created_at?: string;
 }
 
+const ROOM_PRICE_FACTORS: Record<RoomType, number> = {
+  shared: 0.7,
+  self_contain: 1,
+  '1_bedroom': 1.1,
+  '2_bedroom': 1.25,
+};
+
+export function roomPriceFor(roomType: RoomType, basePrice: number): number {
+  return Math.round((basePrice * (ROOM_PRICE_FACTORS[roomType] ?? 1)) / 1000) * 1000;
+}
+
 export type BookingStatus = 'requested' | 'pending_payment' | 'paid' | 'confirmed' | 'active' | 'completed' | 'cancelled' | 'disputed';
 
 export interface Booking {

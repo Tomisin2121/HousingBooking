@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Image, StyleSheet, Platform, Alert, TouchableOpacity, Linking, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Alert, TouchableOpacity, Linking, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Screen, Button, BadgeView, Avatar, Modal, Input, Chip } from '@/components/ui';
+import { Screen, Button, BadgeView, Avatar, Modal, Input, Chip, Photo } from '@/components/ui';
 import { Colors, Spacing, Radius } from '@/constants/theme';
 import { listingsApi, bookingsApi, paymentsApi, messagesApi } from '@/lib/api';
-import type { Listing } from '@/lib/types';
-import { REGION_LABELS } from '@/lib/types';
+import type { Listing, RoomType } from '@/lib/types';
+import { REGION_LABELS, roomPriceFor } from '@/lib/types';
+import { placeholderFor } from '@/lib/placeholders';
 
 const AMENITY_ICONS: Record<string, string> = {
   'Water': '💧', '24hr Light': '⚡', 'Security': '🛡️', 'Fence': '🔒', 'Parking': '🅿️', 'Wi-Fi': '📶',
@@ -27,18 +28,6 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
   '2_bedroom': '2-Bedroom',
   shared: 'Shared',
 };
-
-const ROOM_PRICE_FACTORS: Record<string, number> = {
-  shared: 0.7,
-  self_contain: 1,
-  '1_bedroom': 1.1,
-  '2_bedroom': 1.25,
-};
-
-function roomPrice(roomType: string, base: number): number {
-  const raw = base * (ROOM_PRICE_FACTORS[roomType] ?? 1);
-  return Math.round(raw / 1000) * 1000;
-}
 
 function regionColor(region: string): 'blue' | 'green' | 'orange' {
   return region === 'west_gate' ? 'blue' : region === 'south_gate' ? 'green' : 'orange';
@@ -64,8 +53,12 @@ export default function ListingDetailScreen() {
     }).catch(console.error);
   }, [id]);
 
-  const photos = listing?.photos?.length ? listing.photos : ['https://picsum.photos/seed/placeholder/800/600'];
+  const photos = listing?.photos?.length ? listing.photos : [placeholderFor(listing?.id || 'listing')];
   const imgHeight = Math.round((windowWidth * 9) / 16);
+  const selectedRoom = (roomType || listing?.room_types?.[0] || 'shared') as RoomType;
+  const selectedRent = listing ? roomPriceFor(selectedRoom, listing.price) : 0;
+  const selectedFee = Math.round(selectedRent * 0.02);
+  const selectedTotal = selectedRent + selectedFee + (listing?.caution_fee ?? 0);
   const amenityItemWidth = (windowWidth - Spacing.lg * 2 - Spacing.sm * 2) / 3;
 
   if (!listing) {
@@ -95,12 +88,12 @@ export default function ListingDetailScreen() {
   const handleBook = async () => {
     if (!moveIn) { Alert.alert('Move-in date required'); return; }
     try {
-      const { booking } = await bookingsApi.create({ listing_id: listing.id, room_type: roomType, move_in_date: moveIn });
-      const pay = await paymentsApi.initialize(booking.id);
+      const { booking } = await bookingsApi.create({ listing_id: listing.id, room_type: selectedRoom, move_in_date: moveIn });
+      await paymentsApi.complete(booking.id);
       setBookingOpen(false);
-      Alert.alert('Booking Created!', `Booking confirmed. Redirect to Paystack:\n${pay.authorization_url}`);
+      Alert.alert('Booking paid', 'Your rent is held in escrow. The agent will confirm your booking shortly.');
     } catch (e: any) {
-      Alert.alert('Booking failed', e?.response?.data?.error || 'Try again');
+      Alert.alert('Booking failed', e?.response?.data?.error || e?.message || 'Try again');
     }
   };
 
@@ -122,7 +115,7 @@ export default function ListingDetailScreen() {
           }}
         >
           {photos.map((p, i) => (
-            <Image key={i} source={{ uri: p }} style={{ width: windowWidth, height: imgHeight }} />
+            <Photo key={i} source={p} style={{ width: windowWidth, height: imgHeight }} />
           ))}
         </ScrollView>
         {photos.length > 1 && (
@@ -133,7 +126,7 @@ export default function ListingDetailScreen() {
           </View>
         )}
         {/* Save */}
-        <TouchableOpacity onPress={handleSave} style={styles.saveBtn}>
+        <TouchableOpacity onPress={handleSave} disabled={saving} style={styles.saveBtn}>
           <MaterialIcons name={listing.is_saved ? 'bookmark' : 'bookmark-border'} size={22} color={listing.is_saved ? Colors.light.primary : Colors.light.textSoft} />
         </TouchableOpacity>
 
@@ -197,7 +190,7 @@ export default function ListingDetailScreen() {
             {listing.room_types.map((rt) => (
               <View key={rt} style={styles.roomRow}>
                 <Text style={{ fontSize: 14, fontWeight: '600', color: Colors.light.text }}>{ROOM_TYPE_LABELS[rt] || rt.replace('_', ' ')}</Text>
-                <Text style={{ fontSize: 14, fontWeight: '800', color: Colors.light.primary }}>₦{roomPrice(rt, listing.price).toLocaleString()}/mo</Text>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: Colors.light.primary }}>₦{roomPriceFor(rt, listing.price).toLocaleString()}/mo</Text>
               </View>
             ))}
           </View>
@@ -236,8 +229,8 @@ export default function ListingDetailScreen() {
         <Input label="Move-in Date" placeholder="YYYY-MM-DD" value={moveIn} onChangeText={setMoveIn} />
         <View style={{ backgroundColor: Colors.light.surface, borderRadius: Radius.md, padding: Spacing.md, marginBottom: Spacing.lg }}>
           {[
-            ['Rent', `₦${listing.price.toLocaleString()}`],
-            ['Platform fee (2%)', `₦${listing.platform_fee.toLocaleString()}`],
+            ['Rent', `₦${selectedRent.toLocaleString()}`],
+            ['Platform fee (2%)', `₦${selectedFee.toLocaleString()}`],
             ['Caution fee', `₦${listing.caution_fee.toLocaleString()}`],
           ].map(([k, v]) => (
             <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -247,7 +240,7 @@ export default function ListingDetailScreen() {
           ))}
           <View style={{ borderTopWidth: 1, borderTopColor: Colors.light.line, marginTop: 4, paddingTop: 8, flexDirection: 'row', justifyContent: 'space-between' }}>
             <Text style={{ fontWeight: '700', color: Colors.light.text }}>Total</Text>
-            <Text style={{ fontWeight: '700', color: Colors.light.primary }}>₦{listing.total_estimate.toLocaleString()}</Text>
+            <Text style={{ fontWeight: '700', color: Colors.light.primary }}>₦{selectedTotal.toLocaleString()}</Text>
           </View>
         </View>
         <Button onPress={handleBook} style={{ width: '100%' }}>Pay & Book</Button>

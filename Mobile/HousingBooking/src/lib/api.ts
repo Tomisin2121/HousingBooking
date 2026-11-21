@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { User, Agent } from './types';
+import type { User } from './types';
 import {
   delay,
   loginLocal,
@@ -22,8 +22,12 @@ import {
   myBookingsLocal,
   agentBookingsLocal,
   setBookingStatusLocal,
+  payBookingLocal,
   allBookingsLocal,
   conversationsLocal,
+  getConversationLocal,
+  markConversationReadLocal,
+  setActiveConversation,
   startConversationLocal,
   messagesLocal,
   sendMessageLocal,
@@ -31,6 +35,10 @@ import {
   allAgentsLocal,
   reviewAgentLocal,
   deleteAgentLocal,
+  moderateListingLocal,
+  adminBookingsLocal,
+  adminTransactionsLocal,
+  adminUsersLocal,
 } from './mock';
 
 export const TOKEN_KEY = 'hb_token';
@@ -61,11 +69,19 @@ async function currentUser(): Promise<(User & { password?: string }) | null> {
 export const authApi = {
   async signupStudent(d: any) {
     await delay();
-    return signupStudentLocal(d);
+    try {
+      return signupStudentLocal(d);
+    } catch (e: any) {
+      fail(e?.message || 'Signup failed');
+    }
   },
   async signupAgent(d: any) {
     await delay();
-    return signupAgentLocal(d);
+    try {
+      return signupAgentLocal(d);
+    } catch (e: any) {
+      fail(e?.message || 'Signup failed');
+    }
   },
   async login(d: { email: string; password: string }) {
     await delay();
@@ -201,6 +217,12 @@ export const paymentsApi = {
       status: 'unpaid',
     };
   },
+  async complete(bookingId: string) {
+    await delay();
+    const booking = payBookingLocal(bookingId);
+    if (!booking) fail('Booking not found', 404);
+    return { booking };
+  },
 };
 
 export const messagesApi = {
@@ -216,9 +238,26 @@ export const messagesApi = {
     if (!conversation) fail('Could not start conversation', 400);
     return { conversation };
   },
+  async get(conversationId: string) {
+    await delay(100);
+    await currentUser();
+    const conversation = getConversationLocal(conversationId);
+    if (!conversation) fail('Conversation not found', 404);
+    return { conversation };
+  },
   async list(conversationId: string) {
     await delay();
     return { messages: messagesLocal(conversationId) };
+  },
+  async markRead(conversationId: string) {
+    await delay(100);
+    await currentUser();
+    markConversationReadLocal(conversationId);
+    return { success: true };
+  },
+  async setActive(conversationId: string | null) {
+    setActiveConversation(conversationId);
+    return { success: true };
   },
   async send(d: { conversation_id: string; content: string; type?: string; meta?: any }) {
     await delay();
@@ -233,6 +272,11 @@ export const messagesApi = {
 };
 
 export const adminApi = {
+  async pendingAgents() {
+    await delay();
+    await currentUser();
+    return { agents: allAgentsLocal().filter((a) => a.status === 'pending') };
+  },
   async allAgents() {
     await delay();
     await currentUser();
@@ -249,5 +293,31 @@ export const adminApi = {
     await currentUser();
     deleteAgentLocal(id);
     return { success: true };
+  },
+  async allListings() {
+    await delay();
+    await currentUser();
+    return { listings: listListingsLocal() };
+  },
+  async moderateListing(id: string, action: string) {
+    await delay();
+    await currentUser();
+    moderateListingLocal(id, action);
+    return { success: true };
+  },
+  async bookings() {
+    await delay();
+    await currentUser();
+    return { bookings: adminBookingsLocal() };
+  },
+  async transactions() {
+    await delay();
+    await currentUser();
+    return adminTransactionsLocal();
+  },
+  async users(role?: string) {
+    await delay();
+    await currentUser();
+    return { users: adminUsersLocal(role) };
   },
 };

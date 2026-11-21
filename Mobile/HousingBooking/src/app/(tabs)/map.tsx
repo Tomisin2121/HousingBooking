@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Modal, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Screen, BadgeView } from '@/components/ui';
+import { Screen, BadgeView, Photo } from '@/components/ui';
 import { Colors, Spacing, Radius, FUTA_GATE } from '@/constants/theme';
 import { useFeed } from '@/lib/store';
 import { listingsApi } from '@/lib/api';
@@ -18,7 +17,7 @@ export default function MapScreen() {
 
   useEffect(() => {
     listingsApi.list({}).then((d) => setListings(d.listings || [])).catch(console.error);
-  }, []);
+  }, [setListings]);
 
   const flyTo = (l: Listing) => {
     mapRef.current?.animateToRegion({ latitude: l.lat!, longitude: l.lng!, latitudeDelta: 0.008, longitudeDelta: 0.008 }, 800);
@@ -63,7 +62,7 @@ export default function MapScreen() {
           {selected && (
             <View style={styles.miniCard}>
               <View style={{ flexDirection: 'row', gap: Spacing.md }}>
-                <Image source={{ uri: selected.photos?.[0] || 'https://picsum.photos/seed/placeholder/400/300' }} style={styles.miniImg} />
+                <Photo source={selected.photos?.[0]} style={styles.miniImg} />
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Text style={{ fontWeight: '700', fontSize: 15, color: Colors.light.text, flex: 1 }} numberOfLines={1}>{selected.name}</Text>

@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { TOKEN_KEY } from './api';
+import { TOKEN_KEY, messagesApi } from './api';
 import type { User, Agent, Conversation, Message, Booking, Listing } from './types';
-import { bus, hydrateMock, setCurrentUserId, getCurrentUser, getCurrentAgent } from './mock';
+import { bus, hydrateMock, setCurrentUserId, getCurrentUser, getCurrentAgent, conversationsLocal } from './mock';
 import type { MockSocket } from './mock';
 
 function parseUserId(token: string): string | null {
@@ -98,7 +98,6 @@ export const useChat = create<ChatState>((set, get) => ({
             ? {
                 ...c,
                 last_message: { content: msg.content, type: msg.type, created_at: msg.created_at, sender_id: msg.sender_id },
-                unread_count: msg.sender_id === useAuth.getState().user?.id ? c.unread_count : Number(c.unread_count) + 1,
                 last_message_at: msg.created_at,
               }
             : c
@@ -109,11 +108,14 @@ export const useChat = create<ChatState>((set, get) => ({
             new Date(a.last_message_at || a.last_message?.created_at || 0).getTime()
         ),
     });
+    set({ conversations: conversationsLocal() });
   },
-  markRead: (conversationId) =>
+  markRead: (conversationId) => {
     set((s) => ({
       conversations: s.conversations.map((c) => (c.id === conversationId ? { ...c, unread_count: 0 } : c)),
-    })),
+    }));
+    messagesApi.markRead(conversationId).catch(() => {});
+  },
 }));
 
 interface FeedState {

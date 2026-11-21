@@ -22,6 +22,13 @@ export default function SignupScreen() {
   const [error, setError] = useState('');
 
   const handleSubmit = async () => {
+    if (!name.trim()) { setError('Enter your full name'); return; }
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) { setError('Enter a valid email address'); return; }
+    if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
+    if (type === 'agent' && (!businessName.trim() || !phone.trim())) {
+      setError('Business name and phone are required for agents');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -34,7 +41,7 @@ export default function SignupScreen() {
       setAuth(data.token, data.user, data.agent || null);
       router.replace('/');
     } catch (e: any) {
-      setError(e?.response?.data?.error || 'Signup failed');
+      setError(e?.response?.data?.error || e?.message || 'Signup failed');
     } finally {
       setLoading(false);
     }

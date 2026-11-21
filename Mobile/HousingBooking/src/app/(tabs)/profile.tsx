@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, RefreshControl, Image } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Screen, Avatar, BadgeView, Button } from '@/components/ui';
+import { Screen, Avatar, BadgeView, Button, Modal, Input, Photo } from '@/components/ui';
 import { useAuth, useBookings } from '@/lib/store';
 import { bookingsApi, listingsApi } from '@/lib/api';
 import type { Booking } from '@/lib/types';
@@ -16,25 +16,32 @@ export default function ProfileScreen() {
   const [saved, setSaved] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<'bookings' | 'saved'>('bookings');
+  const [disputeBooking, setDisputeBooking] = useState<Booking | null>(null);
+  const [disputeReason, setDisputeReason] = useState('');
+  const [disputing, setDisputing] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const [b, s] = await Promise.all([bookingsApi.my(), listingsApi.saved()]);
       setBookings(b.bookings || []);
       setSaved(s.listings || []);
     } catch {}
-  };
+  }, [setBookings]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
-  const handleDispute = (b: Booking) => {
-    Alert.prompt('Dispute Booking', 'Reason:', async (reason) => {
-      if (reason) {
-        await bookingsApi.dispute(b.id, reason);
-        load();
-      }
-    });
+  const submitDispute = async () => {
+    if (!disputeBooking || !disputeReason.trim()) return;
+    setDisputing(true);
+    try {
+      await bookingsApi.dispute(disputeBooking.id, disputeReason.trim());
+      setDisputeBooking(null);
+      setDisputeReason('');
+      await load();
+    } finally {
+      setDisputing(false);
+    }
   };
 
   return (
@@ -92,7 +99,7 @@ export default function ProfileScreen() {
                   <Text style={{ color: Colors.light.textSoft, fontSize: 12 }}>{b.business_name}</Text>
                 </View>
                 {b.status === 'active' && (
-                  <Button variant="ghost" size="sm" onPress={() => handleDispute(b)} style={styles.disputeBtn}>
+                  <Button variant="ghost" size="sm" onPress={() => { setDisputeBooking(b); setDisputeReason(''); }} style={styles.disputeBtn}>
                     File Dispute
                   </Button>
                 )}
@@ -106,7 +113,7 @@ export default function ProfileScreen() {
             ) : saved.map((l: any) => (
               <TouchableOpacity key={l.id} style={styles.bookingCard} onPress={() => router.push(`/listing/${l.id}`)}>
                 <View style={{ flexDirection: 'row' }}>
-                  <Image source={{ uri: l.photos?.[0] || 'https://picsum.photos/seed/ph/400/300' }} style={{ width: 64, height: 64, borderRadius: Radius.sm }} />
+                  <Photo source={l.photos?.[0]} style={{ width: 64, height: 64, borderRadius: Radius.sm }} />
                   <View style={{ marginLeft: Spacing.md, flex: 1 }}>
                     <Text style={{ fontWeight: '600', color: Colors.light.text }}>{l.name}</Text>
                     <Text style={{ color: Colors.light.primary, fontSize: 13 }}>₦{l.price.toLocaleString()}/month</Text>
@@ -134,6 +141,22 @@ export default function ProfileScreen() {
           <MaterialIcons name="logout" size={16} color={Colors.light.white} style={{ marginRight: 6 }} /> Logout
         </Button>
       </ScrollView>
+
+      <Modal visible={!!disputeBooking} onClose={() => setDisputeBooking(null)} title="File Dispute">
+        <Text style={{ color: Colors.light.textSoft, fontSize: 13, marginBottom: Spacing.md }}>
+          {disputeBooking?.listing_name} — tell us what went wrong.
+        </Text>
+        <Input
+          label="Reason"
+          value={disputeReason}
+          onChangeText={setDisputeReason}
+          placeholder="Describe the issue"
+          multiline
+        />
+        <Button onPress={submitDispute} loading={disputing} disabled={!disputeReason.trim()} style={{ width: '100%' }}>
+          Submit Dispute
+        </Button>
+      </Modal>
     </Screen>
   );
 }

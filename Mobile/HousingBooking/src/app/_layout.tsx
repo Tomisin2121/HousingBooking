@@ -2,16 +2,15 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useAuth, useChat } from '@/lib/store';
-import { getToken } from '@/lib/api';
 import { authApi, messagesApi } from '@/lib/api';
 
 export default function RootLayout() {
-  const { restore, token, setAuth, loading } = useAuth();
+  const { restore, token, setAuth } = useAuth();
   const { connectSocket, disconnectSocket } = useChat();
 
   useEffect(() => {
     restore();
-  }, []);
+  }, [restore]);
 
   useEffect(() => {
     if (!token) return;
@@ -22,15 +21,15 @@ export default function RootLayout() {
         connectSocket(token);
         const cd = await messagesApi.conversations();
         useChat.getState().setConversations(cd.conversations || []);
-      } catch (e) {
+      } catch {
         // token invalid
       }
     })();
-  }, [token]);
+  }, [token, setAuth, connectSocket]);
 
   useEffect(() => {
     if (!token) disconnectSocket();
-  }, [token]);
+  }, [token, disconnectSocket]);
 
   return (
     <>
@@ -42,8 +41,8 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="listing/[id]" options={{ headerShown: true, title: 'Listing' }} />
         <Stack.Screen name="chat/[id]" />
-        <Stack.Screen name="agent/index" options={{ headerShown: false }} />
-        <Stack.Screen name="admin/index" options={{ headerShown: false }} />
+        <Stack.Screen name="agent" options={{ headerShown: false }} />
+        <Stack.Screen name="admin" options={{ headerShown: false }} />
       </Stack>
     </>
   );

@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
@@ -14,6 +13,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Button, Input } from "@/components/ui";
 import { Colors, Spacing, Radius } from "@/constants/theme";
 import { authApi } from "@/lib/api";
+import { DEMO_CREDENTIALS } from "@/lib/mock";
 import { useAuth } from "@/lib/store";
 
 export default function LoginScreen() {
@@ -33,7 +33,7 @@ export default function LoginScreen() {
       setAuth(data.token, data.user, data.agent || null);
       router.replace("/");
     } catch (e: any) {
-      setError(e?.response?.data?.error || "Login failed");
+      setError(e?.response?.data?.error || e?.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -97,6 +97,20 @@ export default function LoginScreen() {
             Sign In
           </Button>
 
+          <View style={styles.demoBox}>
+            <Text style={styles.demoTitle}>Demo accounts (tap to fill)</Text>
+            {DEMO_CREDENTIALS.map((c) => (
+              <TouchableOpacity
+                key={c.email}
+                onPress={() => { setEmail(c.email); setPassword(c.password); setError(""); }}
+                style={styles.demoRow}
+              >
+                <Text style={styles.demoRole}>{c.role}</Text>
+                <Text style={styles.demoEmail}>{c.email}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <View
             style={{
               flexDirection: "row",
@@ -105,7 +119,7 @@ export default function LoginScreen() {
             }}
           >
             <Text style={{ color: Colors.light.textSoft }}>
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
             </Text>
             <TouchableOpacity onPress={() => router.push("/signup")}>
               <Text style={{ color: Colors.light.primary, fontWeight: "600" }}>
@@ -166,4 +180,14 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     marginBottom: Spacing.md,
   },
+  demoBox: {
+    marginTop: Spacing.lg,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.light.surface,
+  },
+  demoTitle: { fontSize: 12, fontWeight: "700", color: Colors.light.textSoft, marginBottom: Spacing.sm },
+  demoRow: { flexDirection: "row", paddingVertical: 4 },
+  demoRole: { width: 60, fontSize: 12, fontWeight: "600", color: Colors.light.primary },
+  demoEmail: { flex: 1, fontSize: 12, color: Colors.light.textSoft },
 });
