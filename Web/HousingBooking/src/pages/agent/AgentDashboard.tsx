@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Building2, Plus, CreditCard, DollarSign, Trash2, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore, useBookingStore } from '../../store';
 import { listingsApi, bookingsApi } from '../../api';
-import { Button, Badge, Card, Input, Select } from '../../components/ui';
+import { Button, Badge, Card, Input, Select, Photo } from '../../components/ui';
 import type { Listing, Booking, Region, RoomType } from '../../types';
 import { BOOKING_STATUS_LABELS, BOOKING_STATUS_COLORS, REGION_LABELS } from '../../types';
+import { placeholderFor } from '../../placeholders';
 
 export function AgentDashboard() {
   const { user, agent, logout } = useAuthStore();
@@ -116,7 +117,7 @@ function AgentListings({ listings, onRefresh }: { listings: Listing[]; onRefresh
       ) : listings.map((l) => (
         <Card key={l.id} className="p-3 lg:p-4">
           <div className="flex gap-3 lg:gap-4">
-            <img src={l.photos?.[0] || 'https://picsum.photos/seed/ph/400/300'} className="w-20 h-20 lg:w-24 lg:h-24 rounded-lg object-cover shrink-0" />
+            <Photo src={l.photos?.[0] || placeholderFor(l.id)} className="w-20 h-20 lg:w-24 lg:h-24 rounded-lg object-cover shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2 flex-wrap">
                 <div className="min-w-0">
@@ -241,7 +242,7 @@ function NewListingForm({ onDone }: { onDone: () => void }) {
         lng: form.lng ? Number(form.lng) : undefined,
         walk_minutes: form.walk_minutes ? Number(form.walk_minutes) : undefined,
         amenities: form.amenities,
-        photos: form.photos.length ? form.photos : ['https://picsum.photos/seed/' + form.name.replace(/\s/g, '') + '/800/600'],
+        photos: form.photos.length ? form.photos : [placeholderFor(form.name)],
       });
       onDone();
     } catch (err: any) {

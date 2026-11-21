@@ -17,9 +17,10 @@ import {
 } from "lucide-react";
 import { useAuthStore, useFeedStore, useUIStore, useChatStore } from "../store";
 import { listingsApi } from "../api";
-import { Badge, Button, Input, Select, Avatar } from "../components/ui";
+import { Badge, Button, Input, Select, Avatar, Photo } from "../components/ui";
 import type { Listing, Region } from "../types";
 import { REGION_LABELS } from "../types";
+import { placeholderFor } from "../placeholders";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const AMENITY_LABELS: Record<string, string> = {
@@ -105,10 +106,6 @@ function RegionBadge({
       {REGION_LABELS[region]}
     </span>
   );
-}
-
-function placeholder(id: string) {
-  return `https://picsum.photos/seed/${id}/800/600`;
 }
 
 // ─── App Sidebar (left rail) ─────────────────────────────────────────────────
@@ -255,7 +252,7 @@ function FeedCard({
   const isNew = isNewListing(listing.created_at);
   const lowRooms = listing.available_rooms <= 2;
   const amenities = listingAmenities(listing);
-  const photo = listing.photos?.[0] || placeholder(listing.id);
+  const photo = listing.photos?.[0] || placeholderFor(listing.id);
 
   return (
     <div
@@ -292,7 +289,7 @@ function FeedCard({
 
       {/* Photo */}
       <div className="px-4 mt-2.5">
-        <img
+        <Photo
           src={photo}
           alt={listing.name}
           className="w-full aspect-video rounded-lg object-cover"
@@ -596,7 +593,7 @@ export function ListingDetailModal({
   const [booking, setBooking] = useState(false);
   const photos = listing.photos?.length
     ? listing.photos
-    : [placeholder(listing.id)];
+    : [placeholderFor(listing.id)];
 
   const prev = () =>
     setPhotoIndex((i) => (i - 1 + photos.length) % photos.length);
@@ -610,7 +607,7 @@ export function ListingDetailModal({
         <div className="flex-1 overflow-y-auto">
           {/* Gallery */}
           <div className="relative aspect-video bg-gray-200">
-            <img
+            <Photo
               src={photos[photoIndex]}
               alt={listing.name}
               className="w-full h-full object-cover"

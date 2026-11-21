@@ -1,4 +1,33 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { FALLBACK_PHOTO } from '../../placeholders';
+
+export function Photo({
+  src,
+  alt = '',
+  className = '',
+  loading,
+}: {
+  src?: string;
+  alt?: string;
+  className?: string;
+  loading?: 'lazy' | 'eager';
+}) {
+  const [current, setCurrent] = React.useState(src || FALLBACK_PHOTO);
+
+  useEffect(() => {
+    setCurrent(src || FALLBACK_PHOTO);
+  }, [src]);
+
+  return (
+    <img
+      src={current}
+      alt={alt}
+      className={className}
+      loading={loading}
+      onError={() => setCurrent(FALLBACK_PHOTO)}
+    />
+  );
+}
 
 export function Input({
   label, error, icon: Icon, className = '', ...props
@@ -74,8 +103,19 @@ export function Avatar({ src, name, size = 'md', className = '' }: {
 }) {
   const sizes = { sm: 'w-8 h-8 text-xs', md: 'w-10 h-10 text-sm', lg: 'w-14 h-14 text-lg' };
   const initials = name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
-  return src ? (
-    <img src={src} alt={name} className={`rounded-full object-cover ${sizes[size]} ${className}`} />
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  return src && !failed ? (
+    <img
+      src={src}
+      alt={name}
+      className={`rounded-full object-cover ${sizes[size]} ${className}`}
+      onError={() => setFailed(true)}
+    />
   ) : (
     <div className={`rounded-full bg-primary/10 text-primary font-semibold flex items-center justify-center ${sizes[size]} ${className}`}>
       {initials}

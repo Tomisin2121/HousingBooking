@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Building2, MapPin, Navigation } from 'lucide-react';
-import { Button, Badge } from '../../components/ui';
+import { Button, Badge, Photo } from '../../components/ui';
 import type { Listing, Region } from '../../types';
 import { REGION_LABELS, REGION_COLORS } from '../../types';
 
@@ -61,6 +61,7 @@ export function MapPanel({ listings, selectedId, onSelect }: {
         <TileLayer
           attribution='&copy; OpenStreetMap'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          errorTileUrl="/placeholders/map-tile.svg"
         />
         <FLY_TO center={flyTarget} />
         {listings
@@ -76,7 +77,7 @@ export function MapPanel({ listings, selectedId, onSelect }: {
                 <div className="min-w-[180px] p-1">
                   <div className="flex gap-2 items-start">
                     {l.photos?.[0] && (
-                      <img src={l.photos[0]} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                      <Photo src={l.photos[0]} alt="" className="w-12 h-12 rounded-lg object-cover" />
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{l.name}</p>

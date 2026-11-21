@@ -1,4 +1,5 @@
 import type { User, Agent, Listing, Conversation, Message, Booking, Region, RoomType } from './types';
+import { isOldPhoto, placeholderFor } from './placeholders';
 
 export const DEMO_CREDENTIALS = [
   { role: 'Student', email: 'student@housingbooking.app', password: 'Password123!' },
@@ -53,7 +54,7 @@ function buildListing(
     agent_record_id: agent.id,
     description: p.description ?? 'A comfortable, secure hostel close to FUTA main gate with reliable utilities and easy access to campus.',
     amenities: p.amenities ?? ['Water', '24hr Light', 'Security'],
-    photos: p.photos ?? [`https://picsum.photos/seed/${id}/800/600`, `https://picsum.photos/seed/${id}b/800/600`],
+    photos: p.photos ?? [placeholderFor(id), placeholderFor(`${id}b`)],
     available_rooms: p.available_rooms ?? 6,
     available: p.available ?? true,
     walk_minutes: p.walk_minutes ?? 12,
@@ -98,9 +99,9 @@ function buildSeed(): DB {
   };
 
   const agents: Agent[] = [
-    { id: 'ag_1', user_id: 'u_ag1', business_name: 'Alpha Hostels', phone: '0803 000 0001', id_document_url: 'https://picsum.photos/seed/id1/400/300', verified: true, status: 'approved', created_at: iso(60 * 24 * 90) },
-    { id: 'ag_2', user_id: 'u_ag2', business_name: 'GateView Estates', phone: '0803 000 0002', id_document_url: 'https://picsum.photos/seed/id2/400/300', verified: false, status: 'pending', created_at: iso(60 * 24 * 3) },
-    { id: 'ag_3', user_id: 'u_ag3', business_name: 'Campus Comfy', phone: '0803 000 0003', id_document_url: 'https://picsum.photos/seed/id3/400/300', verified: true, status: 'approved', created_at: iso(60 * 24 * 120) },
+    { id: 'ag_1', user_id: 'u_ag1', business_name: 'Alpha Hostels', phone: '0803 000 0001', id_document_url: placeholderFor('id1'), verified: true, status: 'approved', created_at: iso(60 * 24 * 90) },
+    { id: 'ag_2', user_id: 'u_ag2', business_name: 'GateView Estates', phone: '0803 000 0002', id_document_url: placeholderFor('id2'), verified: false, status: 'pending', created_at: iso(60 * 24 * 3) },
+    { id: 'ag_3', user_id: 'u_ag3', business_name: 'Campus Comfy', phone: '0803 000 0003', id_document_url: placeholderFor('id3'), verified: true, status: 'approved', created_at: iso(60 * 24 * 120) },
   ];
 
   const listings: Listing[] = [
@@ -177,10 +178,29 @@ function buildSeed(): DB {
   };
 }
 
+function migratePhotos(db: DB): DB {
+  for (const listing of db.listings) {
+    listing.photos = listing.photos?.map((photo, i) =>
+      isOldPhoto(photo) ? placeholderFor(`${listing.id}-${i}`) : photo,
+    ) ?? [];
+  }
+  for (const booking of db.bookings) {
+    booking.photos = booking.photos?.map((photo, i) =>
+      isOldPhoto(photo) ? placeholderFor(`${booking.id}-${i}`) : photo,
+    ) ?? [];
+  }
+  for (const agent of db.agents) {
+    if (isOldPhoto(agent.id_document_url)) {
+      agent.id_document_url = placeholderFor(agent.id);
+    }
+  }
+  return db;
+}
+
 function loadDB(): DB {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as DB;
+    if (raw) return migratePhotos(JSON.parse(raw) as DB);
   } catch { /* ignore */ }
   const db = buildSeed();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
@@ -308,7 +328,7 @@ export function createListingLocal(data: any): Listing {
   const listing = buildListing(`l_${Math.random().toString(36).slice(2, 9)}`, agent, agentUser, {
     name: data.name, region: data.region, address: data.address, price: Number(data.price),
     room_types: data.room_types ?? ['shared'], description: data.description,
-    amenities: data.amenities ?? [], photos: data.photos?.length ? data.photos : [`https://picsum.photos/seed/${data.name.replace(/\s/g, '')}/800/600`],
+    amenities: data.amenities ?? [], photos: data.photos?.length ? data.photos : [placeholderFor(data.name)],
     available_rooms: Number(data.available_rooms ?? 1), lat: data.lat, lng: data.lng,
     walk_minutes: data.walk_minutes ? Number(data.walk_minutes) : undefined,
     available: data.available ?? true,

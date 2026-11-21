@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { User, Mail, BookOpen, CreditCard, Settings, LogOut, Bookmark, Shield, Building2, DollarSign, ChevronRight, Upload, Edit2, LayoutDashboard } from 'lucide-react';
 import { useAuthStore, useBookingStore } from '../../store';
 import { bookingsApi, listingsApi, authApi, paymentsApi } from '../../api';
-import { Avatar, Badge, Button, Card, Input, Modal } from '../../components/ui';
+import { Avatar, Badge, Button, Card, Input, Modal, Photo } from '../../components/ui';
 import type { Booking } from '../../types';
 import { BOOKING_STATUS_LABELS, BOOKING_STATUS_COLORS } from '../../types';
+import { placeholderFor } from '../../placeholders';
 
 export function ProfilePage({ onLogout }: { onLogout: () => void }) {
   const { user, agent, setAuth } = useAuthStore();
@@ -115,7 +116,7 @@ export function ProfilePage({ onLogout }: { onLogout: () => void }) {
             ) : (
               saved.map((l: any) => (
                 <Card key={l.id} className="p-3 flex gap-3">
-                  <img src={l.photos?.[0] || 'https://picsum.photos/seed/ph/400/300'} className="w-16 h-16 rounded-lg object-cover" />
+                  <Photo src={l.photos?.[0] || placeholderFor(l.id)} className="w-16 h-16 rounded-lg object-cover" />
                   <div className="flex-1">
                     <h4 className="font-semibold text-sm">{l.name}</h4>
                     <p className="text-xs text-ink-soft">₦{Number(l.price).toLocaleString()}/month</p>
